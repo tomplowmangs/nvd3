@@ -1,0 +1,6 @@
+.nv-force .node :hover {
+  fill-opacity: 0.55;
+  stroke: #555555;
+  stoke-width: 2px;
+  stroke-opacity: 0.9;
+}

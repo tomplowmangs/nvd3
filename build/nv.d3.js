@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-06-17 */
+/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-06-24 */
 (function(){
 
 // set up main nv object
@@ -739,6 +739,7 @@ nv.nearestValueIndex = function (values, searchVal, threshold) {
                         // Safari has its own `-webkit-transform` and does not support `transform` 
                         // transform tooltip without transition only in Safari
                         .style('-webkit-transform', new_translate)
+                        .style('-ms-transform', new_translate)
                         .style('opacity', 1);
                 }
 
