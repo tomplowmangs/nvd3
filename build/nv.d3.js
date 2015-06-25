@@ -4719,7 +4719,9 @@ nv.models.forceGraph = function() {
   nv.utils.initOptions(chart);
   return chart;
     
-}nv.models.furiousLegend = function() {
+}
+
+nv.models.furiousLegend = function() {
     "use strict";
 
     //============================================================

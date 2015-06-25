@@ -242,3 +242,4 @@ nv.models.forceGraph = function() {
   return chart;
     
 }
+
