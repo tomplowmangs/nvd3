@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link href="../build/nv.d3.css" rel="stylesheet" type="text/css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.2/d3.min.js" charset="utf-8"></script>
+    <script src="../build/nv.d3.js"></script>
+    <script src="lib/stream_layers.js"></script>
+
+    <style>
+        text {
+            font: 12px sans-serif;
+        }
+        svg {
+            display: block;
+            float: left;
+            height: 350px !important;
+            width: 350px !important;
+        }
+        html, body {
+            margin: 0px;
+            padding: 0px;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class='with-3d-shadow with-transitions'>
+
+<svg id="test1" class="myforcegraph"></svg>
+
+<script>
+
+    testdata = {
+        nodes: [
+            {title: "A", type: 0, size: 10, fixed: true, x: "50%", y: "50%"},
+            {title: "B", type: 1, size: 20, fixed: true, x: "50%", y: "50%"},
+            {title: "C", type: 2, size: 20, fixed: true},
+            {title: "D", type: 0, size: 30},
+            {title: "E", type: 1, size: 20},
+            {title: "F", type: 2, size: 20},
+            {title: "G", type: 0, size: 10},
+            {title: "H", type: 1, size: 20},
+            {title: "I", type: 2, size: 30},
+            {title: "J", type: 0, size: 10}
+        ],
+        links: [
+            {source: 1, target: 0},
+            {source: 0, target: 2},
+            {source: 0, target: 3},
+            {source: 2, target: 4},
+            {source: 7, target: 5},
+            {source: 4, target: 6},
+            {source: 4, target: 7},
+            {source: 9, target: 8},
+            {source: 9, target: 9},
+            {source: 9, target: 1},
+            {source: 9, target: 2},
+            {source: 3, target: 3},
+            {source: 5, target: 3},
+            {source: 6, target: 7},
+            {source: 9, target: 6},
+            {source: 2, target: 4},
+            {source: 5, target: 4},
+            {source: 3, target: 4}
+        ]
+    };
+
+    var height = 350;
+    var width = 350;
+
+    nv.addGraph(function() {
+        var chart = nv.models.forceGraph()
+            .width(width)
+            .height(height)
+            .label(function(d) { return d.title; });
+
+        d3.select("#test1")
+            .datum(testdata)
+            .transition().duration(1200)
+            .attr('width', width)
+            .attr('height', height)
+            .call(chart);
+
+        return chart;
+    });
+
+
+</script>
+</body>
+</html>

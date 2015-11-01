@@ -1,3 +1,17 @@
+.nv-force .node {
+  cursor: pointer;
+}
+
+.nv-force .label {
+  cursor: pointer;
+}
+
+.nvforce .selected-node {
+  stroke: #666666;
+  stroke-width: 3px;
+  opacity: 0.9;
+}
+
 .nv-force .node :hover {
   fill-opacity: 0.55;
   stroke: #555555;

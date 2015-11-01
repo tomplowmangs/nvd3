@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-06-25 */
+/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-11-01 */
 (function(){
 
 // set up main nv object
@@ -4494,15 +4494,15 @@ nv.models.forceGraph = function() {
     , showControls = false
     , showLabels = true
     , duration = 500
-    , label = function(d) { return d.name || d.toString(); }
+    , label = function(d) { return d.name || JSON.stringify(d); }
     , draggable = true
     , linkDistance = 75
     , charge = -120
     , onlyCircles = true
     , nodeRadius = function(d) { return d.value || 6; }
     , shape = "circle"
-    , linkStroke = "#999999"
-    , linkStrokeWidth = function(d) { return d.weight || "3px"; }
+    , linkStroke = "#888888"
+    , linkStrokeWidth = function(d) { return d.weight || "2px"; }
     , dispatch = d3.dispatch('chartClick', 'elementClick', 'elementDblClick', 'elementMouseover', 'elementMouseout', 'elementMousemove', 'renderEnd')
     , treeData = false //Should we consider the structure to be a tree?
     ;
@@ -4598,8 +4598,12 @@ nv.models.forceGraph = function() {
         
         force.start();
                      
-        var node, link, textLabel;
-        
+        var node, link, textLabel, brush;
+
+        var brush = g_force.append("g")
+            .datum(function() { return {selected: false, previouslySelected: false}; })
+            .attr("class", "brush");        
+ 
         //If a tree, we can make collapsible- cause update again on click!
                      //TODO
         var linkSelection = g_force.selectAll(".link")
@@ -4623,21 +4627,45 @@ nv.models.forceGraph = function() {
                       .attr("class", "node")
                       .attr("r", nodeRadius)
                       .on("mouseover", function(d) {
-                        d3.select(this)
-                        .style('stroke', '#666666')
-                        .style('stroke-width', '1.8')
-                        .style('opacity', '0.9');
+                        //d3.select(this)
+                        //.style('stroke', '#666666')
+                        //.style('stroke-width', '1.8')
+                        //.style('opacity', '0.9');
+                        d3.select(this).classed('.selected-node', true)
                       })
                       .on("mouseout", function(d) {
-                        d3.select(this)
-                        .style('stroke-width', '0')
-                        .style('opacity', '1');
+                        //d3.select(this)
+                        //.style('stroke-width', '0')
+                        //.style('opacity', '1');
+                        d3.select(this).classed('.selected-node', false)
                       })
                       .style("fill", function(d, i) { return color(d, i); });
           nodeSelection.transition().duration(duration).attr("r", nodeRadius);
         } else {
           throw "Other symbols and shapes not supported yet, but are easy to do!";
         }
+        
+        brush.call(d3.svg.brush()
+        .x(d3.scale.identity().domain([0, width]))
+        .y(d3.scale.identity().domain([0, height]))
+        .on("brushstart", function(d) {
+          node.each(function(d) { d.previouslySelected = false && d.selected; }); //The true was once whether the shift key was selected
+        })
+        .on("brush", function() {
+          var extent = d3.event.target.extent();
+          node.classed(".selected-node", function(d) {
+            return d.selected = d.previouslySelected ^
+                (extent[0][0] <= d.x && d.x < extent[1][0]
+                && extent[0][1] <= d.y && d.y < extent[1][1]);
+          });
+        })
+        .on("brushend", function() {
+          d3.event.target.clear();
+          d3.select(this).call(d3.event.target);
+        }));
+        
+        console.log("node", node);
+        console.log("nodeSelection", nodeSelection);
         
         if(showLabels) {
           textLabel = g_force.selectAll(".label")
