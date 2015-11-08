@@ -33,16 +33,16 @@
 
     testdata = {
         nodes: [
-            {title: "A", type: 0, size: 10, fixed: true, x: "50%", y: "50%"},
-            {title: "B", type: 1, size: 20, fixed: true, x: "50%", y: "50%"},
-            {title: "C", type: 2, size: 20, fixed: true},
-            {title: "D", type: 0, size: 30},
-            {title: "E", type: 1, size: 20},
-            {title: "F", type: 2, size: 20},
-            {title: "G", type: 0, size: 10},
-            {title: "H", type: 1, size: 20},
-            {title: "I", type: 2, size: 30},
-            {title: "J", type: 0, size: 10}
+            {title: "A", type: 0, size: 100, fixed: true, x: "50%", y: "50%"},
+            {title: "B", type: 1, size: 200, fixed: true, x: "50%", y: "50%"},
+            {title: "C", type: 2, size: 200, fixed: true, symbol: "diamond"},
+            {title: "D", type: 0, size: 300, symbol: "cross"},
+            {title: "E", type: 1, size: 200, symbol: "cross"},
+            {title: "F", type: 2, size: 200, symbol: "square"},
+            {title: "G", type: 0, size: 100},
+            {title: "H", type: 1, size: 200},
+            {title: "I", type: 2, size: 300},
+            {title: "J", type: 0, size: 100}
         ],
         links: [
             {source: 1, target: 0},
@@ -73,7 +73,10 @@
         var chart = nv.models.forceGraph()
             .width(width)
             .height(height)
-            .label(function(d) { return d.title; });
+            .label(function(d) { return d.title; })
+	    .symbolSize(function (d) { return d.size; })
+	    .onNodeSelectionChanged(function (nodes) { console.log("Nodes are:", nodes); } )
+	    .symbolType(function(d) { return d.symbol || "circle"; });
 
         d3.select("#test1")
             .datum(testdata)

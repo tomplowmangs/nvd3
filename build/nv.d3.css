@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-11-01 */
+/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-11-08 */
 .nvd3 .nv-axis {
     pointer-events:none;
     opacity: 1;
@@ -166,24 +166,19 @@
 
 .nv-force .node {
   cursor: pointer;
+  opacity: 0.8
 }
 
 .nv-force .label {
   cursor: pointer;
 }
 
-.nvforce .selected-node {
+.nv-force .selected-node {
   stroke: #666666;
-  stroke-width: 3px;
-  opacity: 0.9;
+  stroke-width: 2px;
+  opacity: 1
 }
 
-.nv-force .node :hover {
-  fill-opacity: 0.55;
-  stroke: #555555;
-  stoke-width: 2px;
-  stroke-opacity: 0.9;
-}
 
 .nvd3 .nv-legend .nv-disabled rect {
     /*fill-opacity: 0;*/

@@ -23,6 +23,8 @@ nv.models.lineWithFocusChart = function() {
         , width = null
         , height = null
         , height2 = 50
+	, onExtentChanged = undefined
+	, contextOnly = false
         , useInteractiveGuideline = false
         , x
         , y
@@ -78,6 +80,9 @@ nv.models.lineWithFocusChart = function() {
             var container = d3.select(this),
                 that = this;
             nv.utils.initSVG(container);
+	    if(contextOnly) {
+              height2 = nv.utils.availableHeight(height, container, margin);
+	    }
             var availableWidth = nv.utils.availableWidth(width, container, margin),
                 availableHeight1 = nv.utils.availableHeight(height, container, margin) - height2,
                 availableHeight2 = height2 - margin2.top - margin2.bottom;
@@ -125,11 +130,14 @@ nv.models.lineWithFocusChart = function() {
 
             gEnter.append('g').attr('class', 'nv-legendWrap');
 
-            var focusEnter = gEnter.append('g').attr('class', 'nv-focus');
-            focusEnter.append('g').attr('class', 'nv-x nv-axis');
-            focusEnter.append('g').attr('class', 'nv-y nv-axis');
-            focusEnter.append('g').attr('class', 'nv-linesWrap');
-            focusEnter.append('g').attr('class', 'nv-interactive');
+	    var focusEnter;
+	    if(!contextOnly) {
+              focusEnter = gEnter.append('g').attr('class', 'nv-focus');
+              focusEnter.append('g').attr('class', 'nv-x nv-axis');
+              focusEnter.append('g').attr('class', 'nv-y nv-axis');
+              focusEnter.append('g').attr('class', 'nv-linesWrap');
+              focusEnter.append('g').attr('class', 'nv-interactive');
+            }
 
             var contextEnter = gEnter.append('g').attr('class', 'nv-context');
             contextEnter.append('g').attr('class', 'nv-x nv-axis');
@@ -216,8 +224,10 @@ nv.models.lineWithFocusChart = function() {
                 ._ticks( nv.utils.calcTicksY(availableHeight1/36, data) )
                 .tickSize( -availableWidth, 0);
 
-            g.select('.nv-focus .nv-x.nv-axis')
+	    if(!contextOnly) {
+              g.select('.nv-focus .nv-x.nv-axis')
                 .attr('transform', 'translate(0,' + availableHeight1 + ')');
+            }
 
             // Setup Brush
             brush
@@ -393,6 +403,17 @@ nv.models.lineWithFocusChart = function() {
                     });
             }
 
+	    var delayLock = false;
+	    var futureRunnable = false;
+	    function unlock() {
+                if (futureRunnable) {
+                    futureRunnable();
+                    delayLock = true; // We set waiting again
+                    setTimeout(unlock, 1000); //We try again in a second
+                } else {
+                    delayLock = false;
+                }
+            }
 
             function onBrush() {
                 brushExtent = brush.empty() ? null : brush.extent();
@@ -405,9 +426,21 @@ nv.models.lineWithFocusChart = function() {
 
                 dispatch.brush({extent: extent, brush: brush});
 
-
                 updateBrushBG();
+                if (onExtentChanged) {
+                    var lExtent = extent;
+                    if(!delayLock) {
+                        delayLock = true;
+                        setTimeout(unlock, 1000);
+		    	onExtentChanged(extent);
+		    } else {
+                        futureRunnable = function() {
+                            onExtentChanged(lExtent);
+                        }
+                    }
+                }
 
+		if (!contextOnly) {
                 // Update Main (Focus)
                 var focusLinesWrap = g.select('.nv-focus .nv-linesWrap')
                     .datum(
@@ -431,6 +464,7 @@ nv.models.lineWithFocusChart = function() {
                     .call(xAxis);
                 g.select('.nv-focus .nv-y.nv-axis').transition().duration(transitionDuration)
                     .call(yAxis);
+                } //END TODO parameterize
             }
         });
 
@@ -472,6 +506,8 @@ nv.models.lineWithFocusChart = function() {
         width:      {get: function(){return width;}, set: function(_){width=_;}},
         height:     {get: function(){return height;}, set: function(_){height=_;}},
         focusHeight:     {get: function(){return height2;}, set: function(_){height2=_;}},
+        contextOnly:	{get: function(){return contextOnly;}, set: function(_){contextOnly=_;}},
+        onExtentChanged:	{get: function(){return onExtentChanged;}, set: function(_){onExtentChanged=_;}},
         showLegend: {get: function(){return showLegend;}, set: function(_){showLegend=_;}},
         brushExtent: {get: function(){return brushExtent;}, set: function(_){brushExtent=_;}},
         defaultState:    {get: function(){return defaultState;}, set: function(_){defaultState=_;}},

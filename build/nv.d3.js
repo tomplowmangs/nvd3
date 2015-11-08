@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-11-01 */
+/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-11-08 */
 (function(){
 
 // set up main nv object
@@ -4498,13 +4498,16 @@ nv.models.forceGraph = function() {
     , draggable = true
     , linkDistance = 75
     , charge = -120
-    , onlyCircles = true
-    , nodeRadius = function(d) { return d.value || 6; }
-    , shape = "circle"
+    , symbolSize = function(d) { return d.value || 6; }
     , linkStroke = "#888888"
     , linkStrokeWidth = function(d) { return d.weight || "2px"; }
+    , selectionStrokeWidth = function(d) { return "2px"; }
+    , selectionFill = "#99CCFF"
+    , selectionStroke = "#6699EE"
+    , symbolType= function(d) { return d.symbol ? d3.svg.symbolTypes[d.symbol] : "circle"; }
     , dispatch = d3.dispatch('chartClick', 'elementClick', 'elementDblClick', 'elementMouseover', 'elementMouseout', 'elementMousemove', 'renderEnd')
     , treeData = false //Should we consider the structure to be a tree?
+    , onNodeSelectionChanged = undefined
     ;
   
   var renderWatch = nv.utils.renderWatch(dispatch);
@@ -4593,16 +4596,18 @@ nv.models.forceGraph = function() {
             throw "Data needs either: .nodes, .links, both, -OR- treeData option is set and data has .children.";
           }
         }
-        
-        
-        
+         
         force.start();
                      
         var node, link, textLabel, brush;
 
+	//TODO the brush style needs to be set dynamically
         var brush = g_force.append("g")
             .datum(function() { return {selected: false, previouslySelected: false}; })
-            .attr("class", "brush");        
+            .attr("class", "selector-brush")
+	    .style("fill", selectionFill)
+	    .style("stroke", selectionStroke)
+            .style("stroke-width", selectionStrokeWidth);
  
         //If a tree, we can make collapsible- cause update again on click!
                      //TODO
@@ -4620,53 +4625,71 @@ nv.models.forceGraph = function() {
         var nodeSelection = g_force.selectAll(".node")
                       .data(data.nodes);
                       
-        console.log("node selection is: ", nodeSelection);
-                    
-        if(onlyCircles) {
-          node = nodeSelection.enter().append("circle")
+        function clearSelection() {
+	  for(var k = data.nodes.length; k--;) {
+              data.nodes[k]._$selected = false;
+	  }
+	  nodeSelection.classed("selected-node", false);
+	};
+	
+	function fireSelectionChanged() {
+	  var selectedNodes = [];
+          for(var k = data.nodes.length; k--;) {
+		if (data.nodes[k]._$selected) {
+			selectedNodes.push(data.nodes[k])
+		}
+	  }
+	  if (onNodeSelectionChanged && selectedNodes.length != 0) {
+		onNodeSelectionChanged(selectedNodes);
+	  }
+        };
+
+          node = nodeSelection.enter().append("path")
                       .attr("class", "node")
-                      .attr("r", nodeRadius)
+		      .attr("d", d3.svg.symbol().type(symbolType).size(symbolSize))
                       .on("mouseover", function(d) {
-                        //d3.select(this)
-                        //.style('stroke', '#666666')
-                        //.style('stroke-width', '1.8')
-                        //.style('opacity', '0.9');
-                        d3.select(this).classed('.selected-node', true)
+			console.log(d);
+                        d3.select(this).classed('selected-node', true);
                       })
                       .on("mouseout", function(d) {
-                        //d3.select(this)
-                        //.style('stroke-width', '0')
-                        //.style('opacity', '1');
-                        d3.select(this).classed('.selected-node', false)
+                        d3.select(this).classed('selected-node', function(d) { return d._$selected; });
                       })
+		      .on("dblclick", function(d) {
+			//NICE TO HAVE: on double click, ensure any links and nodes that are invisible from it are visibled
+			//And if selected, hide any links and nodes that are linked
+                        clearSelection();
+                        d._$selected = true;
+                        d3.select(this).classed('selected-node', function(d) { return d._$selected; });
+		 	fireSelectionChanged();
+                      })
+		      .on("click", function(d) {
+			d._$selected = ! d._$selected;
+                        d3.select(this).classed('selected-node', function(d) { return d._$selected; });
+			fireSelectionChanged();
+		      })
                       .style("fill", function(d, i) { return color(d, i); });
-          nodeSelection.transition().duration(duration).attr("r", nodeRadius);
-        } else {
-          throw "Other symbols and shapes not supported yet, but are easy to do!";
-        }
+          //nodeSelection.transition().duration(duration).attr("r", symbolSize);
         
         brush.call(d3.svg.brush()
         .x(d3.scale.identity().domain([0, width]))
         .y(d3.scale.identity().domain([0, height]))
         .on("brushstart", function(d) {
-          node.each(function(d) { d.previouslySelected = false && d.selected; }); //The true was once whether the shift key was selected
+          nodeSelection.each(function(d) { d._$previouslySelected = false && d._$selected; }); //The true was once whether the shift key was selected
         })
         .on("brush", function() {
           var extent = d3.event.target.extent();
-          node.classed(".selected-node", function(d) {
-            return d.selected = d.previouslySelected ^
+          nodeSelection.classed("selected-node", function(d) {
+            return d._$selected = d._$previouslySelected ^
                 (extent[0][0] <= d.x && d.x < extent[1][0]
                 && extent[0][1] <= d.y && d.y < extent[1][1]);
           });
         })
         .on("brushend", function() {
+	  fireSelectionChanged();
           d3.event.target.clear();
           d3.select(this).call(d3.event.target);
         }));
-        
-        console.log("node", node);
-        console.log("nodeSelection", nodeSelection);
-        
+         
         if(showLabels) {
           textLabel = g_force.selectAll(".label")
                       .data(data.nodes);
@@ -4694,10 +4717,9 @@ nv.models.forceGraph = function() {
               .attr("y1", function(d) { return d.source.y; })
               .attr("x2", function(d) { return d.target.x; })
               .attr("y2", function(d) { return d.target.y; });
-          
-          g_force.selectAll(".node").attr("cx", function(d) { return d.x; })
-            .attr("cy", function(d) { return d.y; });
-            
+         
+          g_force.selectAll(".node").attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
           g_force.selectAll(".label").attr("x", function(d) { return d.x; })
             .attr("y", function(d) { return d.y; });
         });
@@ -4728,14 +4750,17 @@ nv.models.forceGraph = function() {
     charge:     {get: function(){return charge;}, set: function(_){charge=_;}},
     duration:     {get: function(){return duration;}, set: function(_){duration=_;}},
     draggable:  {get: function(){return draggable;}, set: function(_){draggable=_;}},
-    shape:  {get: function(){return shape;}, set: function(_){shape=_;}},
-    onlyCircles:  {get: function(){return onlyCircles;}, set: function(_){onlyCircles=_;}},
-    nodeRadius:  {get: function(){return nodeRadius;}, set: function(_){nodeRadius=_;}},
+    symbolSize:  {get: function(){return symbolSize;}, set: function(_){symbolSize=_;}},
     linkStroke:  {get: function(){return linkStroke;}, set: function(_){linkStroke=_;}},
     linkStrokeWidth:  {get: function(){return linkStrokeWidth;}, set: function(_){linkStrokeWidth=_;}},
     linkDistance: {get: function(){return linkDistance;}, set: function(_){linkDistance=_;}},
+    selectionStroke: {get: function(){return selectionStroke;}, set: function(_){selectionStroke=_;}},
+    selectionFill: {get: function(){return selectionFill;}, set: function(_){selectionFill=_;}},
+    selectionStrokeWidth: {get: function(){return selectionStrokeWidth;}, set: function(_){selectionStrokeWidth=_;}},
     showControls: {get: function(){return showControls;}, set: function(_){showControls=_;}},
     treeData:   {get: function(){return treeData;}, set: function(_){treeData=_;}},
+    onNodeSelectionChanged:   {get: function(){return onNodeSelectionChanged;}, set: function(_){onNodeSelectionChanged=_;}}, 
+    symbolType:   {get: function(){return symbolType;}, set: function(_){symbolType=_;}}, 
 
     //Complex options
     color: {get: function(){return color;}, set: function(_){
@@ -7367,6 +7392,8 @@ nv.models.lineWithFocusChart = function() {
         , width = null
         , height = null
         , height2 = 50
+	, onExtentChanged = undefined
+	, contextOnly = false
         , useInteractiveGuideline = false
         , x
         , y
@@ -7422,6 +7449,9 @@ nv.models.lineWithFocusChart = function() {
             var container = d3.select(this),
                 that = this;
             nv.utils.initSVG(container);
+	    if(contextOnly) {
+              height2 = nv.utils.availableHeight(height, container, margin);
+	    }
             var availableWidth = nv.utils.availableWidth(width, container, margin),
                 availableHeight1 = nv.utils.availableHeight(height, container, margin) - height2,
                 availableHeight2 = height2 - margin2.top - margin2.bottom;
@@ -7469,11 +7499,14 @@ nv.models.lineWithFocusChart = function() {
 
             gEnter.append('g').attr('class', 'nv-legendWrap');
 
-            var focusEnter = gEnter.append('g').attr('class', 'nv-focus');
-            focusEnter.append('g').attr('class', 'nv-x nv-axis');
-            focusEnter.append('g').attr('class', 'nv-y nv-axis');
-            focusEnter.append('g').attr('class', 'nv-linesWrap');
-            focusEnter.append('g').attr('class', 'nv-interactive');
+	    var focusEnter;
+	    if(!contextOnly) {
+              focusEnter = gEnter.append('g').attr('class', 'nv-focus');
+              focusEnter.append('g').attr('class', 'nv-x nv-axis');
+              focusEnter.append('g').attr('class', 'nv-y nv-axis');
+              focusEnter.append('g').attr('class', 'nv-linesWrap');
+              focusEnter.append('g').attr('class', 'nv-interactive');
+            }
 
             var contextEnter = gEnter.append('g').attr('class', 'nv-context');
             contextEnter.append('g').attr('class', 'nv-x nv-axis');
@@ -7560,8 +7593,10 @@ nv.models.lineWithFocusChart = function() {
                 ._ticks( nv.utils.calcTicksY(availableHeight1/36, data) )
                 .tickSize( -availableWidth, 0);
 
-            g.select('.nv-focus .nv-x.nv-axis')
+	    if(!contextOnly) {
+              g.select('.nv-focus .nv-x.nv-axis')
                 .attr('transform', 'translate(0,' + availableHeight1 + ')');
+            }
 
             // Setup Brush
             brush
@@ -7737,6 +7772,18 @@ nv.models.lineWithFocusChart = function() {
                     });
             }
 
+	    var delayLock = false;
+	    var futureRunnable = false;
+	    function unlock() {
+		console.log("UNLOCK!");
+                if (futureRunnable) {
+                    futureRunnable();
+                    delayLock = true; // We set waiting again
+                    setTimeout(unlock, 1000); //We try again in a second
+                } else {
+                    delayLock = false;
+                }
+            }
 
             function onBrush() {
                 brushExtent = brush.empty() ? null : brush.extent();
@@ -7749,9 +7796,21 @@ nv.models.lineWithFocusChart = function() {
 
                 dispatch.brush({extent: extent, brush: brush});
 
-
                 updateBrushBG();
+                if (onExtentChanged) {
+                    var lExtent = extent;
+                    if(!delayLock) {
+                        delayLock = true;
+                        setTimeout(unlock, 1000);
+		    	onExtentChanged(extent);
+		    } else {
+                        futureRunnable = function() {
+                            onExtentChanged(lExtent);
+                        }
+                    }
+                }
 
+		if (!contextOnly) {
                 // Update Main (Focus)
                 var focusLinesWrap = g.select('.nv-focus .nv-linesWrap')
                     .datum(
@@ -7775,6 +7834,7 @@ nv.models.lineWithFocusChart = function() {
                     .call(xAxis);
                 g.select('.nv-focus .nv-y.nv-axis').transition().duration(transitionDuration)
                     .call(yAxis);
+                } //END TODO parameterize
             }
         });
 
@@ -7816,6 +7876,8 @@ nv.models.lineWithFocusChart = function() {
         width:      {get: function(){return width;}, set: function(_){width=_;}},
         height:     {get: function(){return height;}, set: function(_){height=_;}},
         focusHeight:     {get: function(){return height2;}, set: function(_){height2=_;}},
+        contextOnly:	{get: function(){return contextOnly;}, set: function(_){contextOnly=_;}},
+        onExtentChanged:	{get: function(){return onExtentChanged;}, set: function(_){onExtentChanged=_;}},
         showLegend: {get: function(){return showLegend;}, set: function(_){showLegend=_;}},
         brushExtent: {get: function(){return brushExtent;}, set: function(_){brushExtent=_;}},
         defaultState:    {get: function(){return defaultState;}, set: function(_){defaultState=_;}},
