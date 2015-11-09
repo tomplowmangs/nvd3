@@ -64,7 +64,7 @@ nv.models.forceGraph = function() {
           .linkDistance(linkDistance)
           .size([availableWidth, availableHeight]);
         
-        if (!data) {
+        if (!data || (data.nodes && data.nodes.length==0) || (data.links && data.links.length==0)) {
             nv.utils.noData(chart, container);
             renderWatch.renderEnd('force immediate');
             return chart;

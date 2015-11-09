@@ -1,4 +1,4 @@
-/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-11-08 */
+/* nvd3 version 1.8.1 (https://github.com/novus/nvd3) 2015-11-09 */
 (function(){
 
 // set up main nv object
@@ -4542,7 +4542,7 @@ nv.models.forceGraph = function() {
           .linkDistance(linkDistance)
           .size([availableWidth, availableHeight]);
         
-        if (!data) {
+        if (!data || (data.nodes && data.nodes.length==0) || (data.links && data.links.length==0)) {
             nv.utils.noData(chart, container);
             renderWatch.renderEnd('force immediate');
             return chart;
@@ -7775,7 +7775,6 @@ nv.models.lineWithFocusChart = function() {
 	    var delayLock = false;
 	    var futureRunnable = false;
 	    function unlock() {
-		console.log("UNLOCK!");
                 if (futureRunnable) {
                     futureRunnable();
                     delayLock = true; // We set waiting again

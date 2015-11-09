@@ -408,6 +408,7 @@ nv.models.lineWithFocusChart = function() {
 	    function unlock() {
                 if (futureRunnable) {
                     futureRunnable();
+                    futureRunnable = false;
                     delayLock = true; // We set waiting again
                     setTimeout(unlock, 1000); //We try again in a second
                 } else {
