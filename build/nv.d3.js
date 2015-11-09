@@ -4742,6 +4742,7 @@ nv.models.forceGraph = function() {
     //simple options, get/set the necessary values
     width:      {get: function(){return width;}, set: function(_){width=_;}},
     height:     {get: function(){return height;}, set: function(_){height=_;}},
+    margin:     {get: function(){return margin;}, set: function(_){margin=_;}},
     targets:    {get: function(){return getTargets;}, set: function(_){getTargets=_;}},
     id:         {get: function(){return id;}, set: function(_){id=_;}},
     showLegend: {get: function(){return showLegend;}, set: function(_){showLegend=_;}},
