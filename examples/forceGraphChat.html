@@ -14,8 +14,8 @@
         svg {
             display: block;
             float: left;
-            height: 350px !important;
-            width: 350px !important;
+            height: "100%";
+            width: "100%";
         }
         html, body {
             margin: 0px;
@@ -33,9 +33,9 @@
 
     testdata = {
         nodes: [
-            {title: "A", type: 0, size: 100, fixed: true, x: "50%", y: "50%"},
-            {title: "B", type: 1, size: 200, fixed: true, x: "50%", y: "50%"},
-            {title: "C", type: 2, size: 200, fixed: true, symbol: "diamond"},
+            {title: "A", type: 0, size: 100, fixed: false, x: "50%", y: "50%"},
+            {title: "B", type: 1, size: 200, fixed: false, x: "50%", y: "50%"},
+            {title: "C", type: 2, size: 200, fixed: false, symbol: "diamond"},
             {title: "D", type: 0, size: 300, symbol: "cross"},
             {title: "E", type: 1, size: 200, symbol: "cross"},
             {title: "F", type: 2, size: 200, symbol: "square"},
@@ -71,8 +71,9 @@
 
     nv.addGraph(function() {
         var chart = nv.models.forceGraph()
-            .width(width)
-            .height(height)
+            //.width(width)
+            //.height(height)
+            .margin({top: 10, bottom: 10, left: 10, right: 0})
             .label(function(d) { return d.title; })
 	    .symbolSize(function (d) { return d.size; })
 	    .onNodeSelectionChanged(function (nodes) { console.log("Nodes are:", nodes); } )
@@ -81,8 +82,8 @@
         d3.select("#test1")
             .datum(testdata)
             .transition().duration(1200)
-            .attr('width', width)
-            .attr('height', height)
+            //.attr('width', width)
+            //.attr('height', height)
             .call(chart);
 
         return chart;

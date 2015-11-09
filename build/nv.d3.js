@@ -4484,8 +4484,8 @@ nv.models.forceGraph = function() {
   //------------------------------------------------------------
 
   var margin = {top: 0, right: 0, bottom: 0, left: 0}
-    , width = 500
-    , height = 500
+    , width = null
+    , height = null
     , noData = null
     , getTargets = function(d) { return d.targets; } //If going down the link only option, se will use these.
     , id = Math.floor(Math.random() * 10000) //Create semi-unique ID in case user doesn't select one
@@ -4521,15 +4521,19 @@ nv.models.forceGraph = function() {
       renderWatch.reset();
       
       selection.each(function(data) {
-        
-        //Set up containers
-        var availableWidth = width - margin.left - margin.right
-            , availableHeight = height - margin.top - margin.bottom
-            ;
-        
-        container = d3.select(this);
+       
+        var container = d3.select(this); 
         
         nv.utils.initSVG(container);
+
+        //Set up containers
+        //var availableWidth = width - margin.left - margin.right
+        //    , availableHeight = height - margin.top - margin.bottom
+        //    ;
+        var availableWidth = nv.utils.availableWidth(width, container, margin);
+        var availableHeight = nv.utils.availableHeight(height, container, margin);
+        
+        container = d3.select(this);
         
         chart.update = function() { container.transition().duration(duration).call(chart); };
         
@@ -4672,8 +4676,8 @@ nv.models.forceGraph = function() {
           //nodeSelection.transition().duration(duration).attr("r", symbolSize);
         
         brush.call(d3.svg.brush()
-        .x(d3.scale.identity().domain([0, width]))
-        .y(d3.scale.identity().domain([0, height]))
+        .x(d3.scale.identity().domain([0, availableWidth]))
+        .y(d3.scale.identity().domain([0, availableHeight]))
         .on("brushstart", function(d) {
           nodeSelection.each(function(d) { d._$previouslySelected = false && d._$selected; }); //The true was once whether the shift key was selected
         })

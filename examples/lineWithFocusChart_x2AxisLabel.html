@@ -45,9 +45,10 @@
         chart.useInteractiveGuideline(false);
 	chart.showLegend(false);
 	chart.onExtentChanged(function(extent) { console.log("!Extent is: ", extent); });
-
+        data = testData();
+        console.log("Data: ", data);
         d3.select('#chart svg')
-            .datum(testData())
+            .datum(data)
             .call(chart);
 	
 	//Back up option for hiding the focus
