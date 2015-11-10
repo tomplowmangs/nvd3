@@ -142,6 +142,7 @@ nv.models.forceGraph = function() {
                     .data(data.links);
         link = linkSelection.enter().append("line")
                     .attr("class", "link")
+                    .style("visibility", function(d) { return (d.source.inactive || d.target.inactive) ? "hidden" : "visible";})
                     .style("stroke", linkStroke)
                     .style("stroke-width", linkStrokeWidth);
                     
@@ -173,6 +174,7 @@ nv.models.forceGraph = function() {
 
           node = nodeSelection.enter().append("path")
                       .attr("class", "node")
+                      .style("visibility", function(d) { return d.inactive ? "hidden" : "visible"; })
 		      .attr("d", d3.svg.symbol().type(symbolType).size(symbolSize))
                       .on("mouseover", function(d) {
 			console.log(d);
@@ -222,6 +224,7 @@ nv.models.forceGraph = function() {
                       .data(data.nodes);
           textLabel.enter()
                    .append('text').attr("class", "label").style("font-weight", "bold")
+                  .style("visibility", function(d) { return d.inactive ? "hidden" : "visible"; })
                    .text(label);
           textLabel.transition().duration(duration).text(label);
         } else {
