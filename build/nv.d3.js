@@ -4626,8 +4626,6 @@ nv.models.forceGraph = function() {
                     
         linkSelection.exit().remove();
         
-        console.log("Selecting data.nodes on .node class!: ", data.nodes);
-        
         var nodeSelection = g_force.selectAll(".node")
                       .data(data.nodes);
                       
@@ -4655,7 +4653,6 @@ nv.models.forceGraph = function() {
                       .style("visibility", function(d) { return d.inactive ? "hidden" : "visible"; })
 		      .attr("d", d3.svg.symbol().type(symbolType).size(symbolSize))
                       .on("mouseover", function(d) {
-			console.log(d);
                         d3.select(this).classed('selected-node', true);
                       })
                       .on("mouseout", function(d) {
