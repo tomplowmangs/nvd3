@@ -77,7 +77,8 @@
             .label(function(d) { return d.title; })
 	    .symbolSize(function (d) { return d.size; })
 	    .onNodeSelectionChanged(function (nodes) { console.log("Nodes are:", nodes); } )
-	    .symbolType(function(d) { return d.symbol || "circle"; });
+	    .symbolType(function(d) { return d.symbol || "circle"; })
+      .selectionStroke("red");
 
         d3.select("#test1")
             .datum(testdata)

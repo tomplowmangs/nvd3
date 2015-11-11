@@ -37,6 +37,8 @@ nv.models.forceGraph = function() {
   
   var force = d3.layout.force();
 
+  var brush = false;
+
   //Was right above....
     
   function chart(selection) {
@@ -62,9 +64,8 @@ nv.models.forceGraph = function() {
         var wrap = container.selectAll('.nv-wrap.nv-force').data([data]);
         var wrapEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-wrap nv-force nv-chart-' + id);
         var gEnter = wrapEnter.append('g');
-        var g_force = gEnter.append('g').attr('class', 'nv-force');
-        g_force = container.selectAll('.nv-wrap.nv-force.nv-force');
-                     
+        var g_force = container.selectAll('.nv-wrap.nv-force.nv-force');
+ 
         force = force.charge(charge)
           .linkDistance(linkDistance)
           .size([availableWidth, availableHeight]);
@@ -126,19 +127,27 @@ nv.models.forceGraph = function() {
          
         force.start();
                      
-        var node, link, textLabel, brush;
+        var node, link, textLabel;
+        
+        if(!brush) {
 
-	//TODO the brush style needs to be set dynamically
-        var brush = g_force.append("g")
-            .datum(function() { return {selected: false, previouslySelected: false}; })
-            .attr("class", "selector-brush")
-	    .style("fill", selectionFill)
-	    .style("stroke", selectionStroke)
-            .style("stroke-width", selectionStrokeWidth);
+          brush = g_force.append("g")
+              .datum(function() { return {selected: false, previouslySelected: false}; })
+              .attr("class", "selector-brush")
+              .style("fill", selectionFill)
+              .style("stroke", selectionStroke)
+              .style("stroke-width", selectionStrokeWidth);
+
+        }
+        
+        //Get layers right
+        var g_force_link_layer = g_force.append("g").attr("id", "link-layer");
+        var g_force_node_layer = g_force.append("g").attr("id", "node-layer");
+        var g_force_label_layer = g_force.append("g").attr("id", "label-layer");
  
         //If a tree, we can make collapsible- cause update again on click!
                      //TODO
-        var linkSelection = g_force.selectAll(".link")
+        var linkSelection = g_force.select("#link-layer").selectAll(".link")
                     .data(data.links);
         link = linkSelection.enter().append("line")
                     .attr("class", "link")
@@ -148,7 +157,7 @@ nv.models.forceGraph = function() {
                     
         linkSelection.exit().remove();
         
-        var nodeSelection = g_force.selectAll(".node")
+        var nodeSelection = g_force.select("#node-layer").selectAll(".node")
                       .data(data.nodes);
                       
         function clearSelection() {
@@ -172,7 +181,6 @@ nv.models.forceGraph = function() {
 
           node = nodeSelection.enter().append("path")
                       .attr("class", "node")
-                      .style("visibility", function(d) { return d.inactive ? "hidden" : "visible"; })
 		      .attr("d", d3.svg.symbol().type(symbolType).size(symbolSize))
                       .on("mouseover", function(d) {
                         d3.select(this).classed('selected-node', true);
@@ -217,12 +225,13 @@ nv.models.forceGraph = function() {
         }));
          
         if(showLabels) {
-          textLabel = g_force.selectAll(".label")
+          textLabel = g_force.select("#label-layer").selectAll(".label")
                       .data(data.nodes);
           textLabel.enter()
                    .append('text').attr("class", "label").style("font-weight", "bold")
                   .style("visibility", function(d) { return d.inactive ? "hidden" : "visible"; })
                    .text(label);
+          textLabel.exit().remove();
           textLabel.transition().duration(duration).text(label);
         } else {
           //NOTE we still show on hover
@@ -235,8 +244,7 @@ nv.models.forceGraph = function() {
         if(draggable) {
           node.call(force.drag);
           textLabel.call(force.drag);
-        }
-        
+        } 
                      
         force.on("tick", function() {
     
@@ -245,13 +253,12 @@ nv.models.forceGraph = function() {
               .attr("x2", function(d) { return d.target.x; })
               .attr("y2", function(d) { return d.target.y; });
          
-          g_force.selectAll(".node").attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+          g_force.selectAll(".node").attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; }).style("visibility", function(d) { return d.inactive ? "hidden" : "visible"; });
 
           g_force.selectAll(".label").attr("x", function(d) { return d.x; })
-            .attr("y", function(d) { return d.y; });
+            .attr("y", function(d) { return d.y; }).style("visibility", function(d) { return d.inactive ? "hidden": "visible"; });
         });
         
-        nodeSelection.exit().remove();
         
         
       });
